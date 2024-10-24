@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>게임 목록</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      .team-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .player-score {
+        font-weight: bold;
+      }
+      .score-inputs {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: nowrap;
+        margin-bottom: 10px;
+      }
+      .score-input {
+        width: 70px;
+      }
+      .score-input-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-direction: row;
+      }
+      .score-label {
+        font-size: 0.9em;
+      }
+      .saved-game {
+        margin-bottom: 40px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .game-title {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">내가 생성한 게임 목록</h1>
+
+      <section id="game-list-section">
+        <h2>게임 목록</h2>
+        <div id="game-list-container"></div>
+      </section>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      // 파스텔톤 색상 배열
+      const pastelColors = [
+        "#f9f0ff",
+        "#e6f7ff",
+        "#fff0f6",
+        "#f0fff0",
+        "#fffbe6",
+        "#e6fffb",
+        "#e6f7ff",
+        "#f0f5ff",
+        "#fff0f6",
+        "#f0fffb",
+      ];
+
+      // 저장된 게임 목록 표시
+      function displayGames() {
+        const gameListContainer = document.getElementById("game-list-container");
+        gameListContainer.innerHTML = ""; // 기존 내용을 초기화
+
+        let games = JSON.parse(localStorage.getItem("bowlingGames")) || [];
+
+        if (games.length === 0) {
+          gameListContainer.innerHTML = "<p>생성된 게임이 없습니다.</p>";
+          return;
+        }
+
+        games.forEach((game, index) => {
+          const gameDiv = document.createElement("div");
+          gameDiv.classList.add("saved-game");
+
+          gameDiv.innerHTML = `<div class="game-title"><h4>게임 ${index + 1}: ${game.title}</h4></div>`;
+
+          // 섞인 색상 배열에서 팀별 색상 선택 (겹치지 않게)
+          const shuffledColors = pastelColors.sort(() => 0.5 - Math.random());
+          let usedColors = [];
+
+          game.players.forEach((team, teamIndex) => {
+            const teamDiv = document.createElement("div");
+            teamDiv.classList.add("team-section");
+
+            // 랜덤 색상 지정, 이전 색상과 겹치지 않도록
+            let color;
+            do {
+              color = shuffledColors[teamIndex % shuffledColors.length];
+            } while (usedColors.includes(color));
+            usedColors.push(color);
+            teamDiv.style.backgroundColor = color;
+
+            teamDiv.innerHTML = `<h5>팀 ${
+              teamIndex + 1
+            } <button class="btn btn-primary btn-sm" onclick="calculateScores(${index}, ${teamIndex})">계산</button> <span id="team-total-score-box-${index}-${teamIndex}" style="font-weight: bold; color: black;">총점: 0점</span></h5>`;
+
+            team.members.forEach((player, playerIndex) => {
+              const score = parseInt(player.score) || 0;
+              const handicap = parseInt(player.handicap) || 0;
+              const totalScore = score + handicap;
+              let playerSection = `
+                <p class="player-score" id="player-score-${index}-${teamIndex}-${playerIndex}">${
+                player.name
+              }: ${totalScore}점 ${handicap ? "(핸디: " + handicap + ")" : ""}</p>
+                <div class="score-inputs">
+              `;
+
+              for (let gameIdx = 1; gameIdx <= game.gameCount; gameIdx++) {
+                playerSection += `
+                  <div class="score-input-container">
+                    <input type="number" class="form-control score-input" id="player${index}-${teamIndex}-${playerIndex}-score-game${gameIdx}" placeholder="${gameIdx}게임 점수" />
+                  </div>
+                `;
+              }
+
+              playerSection += `</div>`;
+              teamDiv.innerHTML += playerSection;
+            });
+
+            gameDiv.appendChild(teamDiv);
+          });
+
+          gameListContainer.appendChild(gameDiv);
+        });
+        updateTeamScores();
+      }
+
+      // 점수 계산 함수
+      function calculateScores(gameIndex, teamIndex) {
+        let games = JSON.parse(localStorage.getItem("bowlingGames")) || [];
+        const team = games[gameIndex].players[teamIndex];
+
+        let teamTotalScore = 0;
+
+        team.members.forEach((player, playerIndex) => {
+          let playerTotalScore = 0;
+          for (let gameIdx = 1; gameIdx <= games[gameIndex].gameCount; gameIdx++) {
+            const scoreInput = document.getElementById(
+              `player${gameIndex}-${teamIndex}-${playerIndex}-score-game${gameIdx}`,
+            );
+            const scoreValue = parseInt(scoreInput.value) || 0;
+            if (scoreInput.value) {
+              playerTotalScore += scoreValue + (parseInt(player.handicap) || 0);
+            } else {
+              playerTotalScore += scoreValue;
+            }
+          }
+          document.getElementById(`player-score-${gameIndex}-${teamIndex}-${playerIndex}`).innerText = `${
+            player.name
+          }: ${playerTotalScore}점 ${player.handicap ? "(핸디: " + player.handicap + ")" : ""}`;
+          teamTotalScore += playerTotalScore;
+        });
+        document.getElementById(
+          `team-total-score-box-${gameIndex}-${teamIndex}`,
+        ).innerText = `총점: ${teamTotalScore}점`;
+        updateTeamScores();
+      }
+
+      function updateTeamScores() {
+        let scores = [];
+        document.querySelectorAll(`[id^=team-total-score-box-]`).forEach((el) => {
+          const text = el.innerText;
+          const score = parseInt(text.split("총점: ")[1]) || 0;
+          scores.push({ element: el, score });
+        });
+        scores.sort((a, b) => b.score - a.score);
+        scores.forEach((item, index) => {
+          if (index === 0) {
+            item.element.style.color = "red";
+          } else if (index === 1) {
+            item.element.style.color = "green";
+          } else if (index === 2) {
+            item.element.style.color = "black";
+          } else {
+            item.element.style.color = "";
+          }
+        });
+      }
+
+      // 페이지 로드 시 저장된 게임 표시
+      window.onload = function () {
+        displayGames();
+      };
+    </script>
+  </body>
+</html>

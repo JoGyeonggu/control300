@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>플레이어 설정</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">플레이어 설정</h1>
+
+      <section id="player-setup-section">
+        <h2>플레이어 설정</h2>
+        <form id="player-setup-form"></form>
+        <button type="button" class="btn btn-primary mt-3" onclick="savePlayers()">플레이어 설정 완료</button>
+      </section>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      // 로컬 스토리지에서 게임 정보 가져오기
+      const currentGameIndex = localStorage.getItem("currentGameIndex");
+      let games = JSON.parse(localStorage.getItem("bowlingGames")) || [];
+      let currentGame = games[currentGameIndex];
+
+      // 플레이어 설정 폼 생성
+      function createPlayerForm() {
+        const playerSetupForm = document.getElementById("player-setup-form");
+        playerSetupForm.innerHTML = ""; // 기존 내용을 초기화
+
+        for (let i = 0; i < currentGame.teamCount; i++) {
+          const teamDiv = document.createElement("div");
+          teamDiv.classList.add("team-section", "mt-4", "p-3", "border");
+          teamDiv.innerHTML = `<h4>팀 ${i + 1}</h4>`;
+
+          for (let j = 0; j < currentGame.playerCount; j++) {
+            teamDiv.innerHTML += `
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="team${i}-player${j}-name">플레이어 ${j + 1} 이름</label>
+                  <input type="text" class="form-control" id="team${i}-player${j}-name" placeholder="플레이어 이름을 입력하세요" maxlength="5" style="width: 100%;" />
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="team${i}-player${j}-handicap">핸디캡</label>
+                  <input type="number" class="form-control" id="team${i}-player${j}-handicap" placeholder="핸디캡을 입력하세요" max="99" style="width: 100%;" />
+                </div>
+              </div>`;
+          }
+          playerSetupForm.appendChild(teamDiv);
+        }
+      }
+
+      // 플레이어 정보 저장
+      function savePlayers() {
+        const players = [];
+
+        for (let i = 0; i < currentGame.teamCount; i++) {
+          const teamPlayers = [];
+
+          for (let j = 0; j < currentGame.playerCount; j++) {
+            const playerName = document.getElementById(`team${i}-player${j}-name`).value;
+            const playerHandicap = document.getElementById(`team${i}-player${j}-handicap`).value;
+
+            if (!playerName) {
+              alert("모든 플레이어의 이름을 입력해주세요.");
+              return;
+            }
+
+            teamPlayers.push({ name: playerName, handicap: playerHandicap });
+          }
+          players.push({ team: i + 1, members: teamPlayers });
+        }
+
+        currentGame.players = players;
+        games[currentGameIndex] = currentGame;
+        localStorage.setItem("bowlingGames", JSON.stringify(games));
+
+        alert("플레이어 설정이 완료되었습니다.");
+        window.location.href = "/dashboard";
+      }
+
+      // 페이지 로드 시 플레이어 설정 폼 생성
+      window.onload = function () {
+        if (!currentGame) {
+          alert("설정할 게임 정보가 없습니다.");
+          window.location.href = "/game";
+        } else {
+          createPlayerForm();
+        }
+      };
+    </script>
+  </body>
+</html>

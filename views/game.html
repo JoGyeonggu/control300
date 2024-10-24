@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>게임 생성</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">볼링 내기 게임</h1>
+
+      <!-- 게임 생성 섹션 -->
+      <section id="game-creation">
+        <h2>게임 생성</h2>
+        <form id="create-game-form">
+          <div class="form-group">
+            <label for="game-title">게임 제목</label>
+            <input type="text" class="form-control" id="game-title" placeholder="게임 제목을 입력하세요" />
+          </div>
+
+          <div class="form-group">
+            <label for="game-count">게임 수</label>
+            <input type="number" class="form-control" id="game-count" min="1" value="1" />
+          </div>
+
+          <div class="form-group">
+            <label for="team-count">팀 수</label>
+            <input type="number" class="form-control" id="team-count" min="1" value="2" />
+          </div>
+
+          <div class="form-group">
+            <label for="player-count">각 팀당 플레이어 수</label>
+            <input type="number" class="form-control" id="player-count" min="1" value="2" />
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="saveGame()">게임 생성 및 저장</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      // 로컬 스토리지에 게임 저장
+      function saveGame() {
+        const gameTitle = document.getElementById("game-title").value;
+        const gameCount = document.getElementById("game-count").value;
+        const teamCount = document.getElementById("team-count").value;
+        const playerCount = document.getElementById("player-count").value;
+
+        if (!gameTitle || !gameCount || !teamCount || !playerCount) {
+          alert("모든 항목을 입력해주세요.");
+          return;
+        }
+
+        const gameData = {
+          title: gameTitle,
+          gameCount: gameCount,
+          teamCount: teamCount,
+          playerCount: playerCount,
+        };
+
+        let games = JSON.parse(localStorage.getItem("bowlingGames")) || [];
+        games.push(gameData);
+        localStorage.setItem("bowlingGames", JSON.stringify(games));
+        localStorage.setItem("currentGameIndex", games.length - 1);
+
+        alert("게임이 생성되었습니다.");
+        window.location.href = "/player";
+      }
+    </script>
+  </body>
+</html>
