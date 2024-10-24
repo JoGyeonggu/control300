@@ -51,7 +51,9 @@
   </head>
   <body>
     <div class="container mt-5">
-      <h1 class="text-center">내가 생성한 게임 목록</h1>
+      <div class="text-right mb-3">
+        <button class="btn btn-success" onclick="window.location.href='/game'">게임 생성</button>
+      </div>
 
       <section id="game-list-section">
         <h2>게임 목록</h2>
@@ -95,7 +97,12 @@
           const gameDiv = document.createElement("div");
           gameDiv.classList.add("saved-game");
 
-          gameDiv.innerHTML = `<div class="game-title"><h4>게임 ${index + 1}: ${game.title}</h4></div>`;
+          gameDiv.innerHTML = `
+                              <div class="game-title">
+                                <h4>게임 ${index + 1}: ${game.title}
+                                  <button class="btn btn-danger btn-sm float-right" onclick="deleteGame(${index})">삭제</button>
+                                </h4>
+                              </div>`;
 
           // 섞인 색상 배열에서 팀별 색상 선택 (겹치지 않게)
           const shuffledColors = pastelColors.sort(() => 0.5 - Math.random());
@@ -204,6 +211,14 @@
       window.onload = function () {
         displayGames();
       };
+
+      // 게임 삭제 함수
+      function deleteGame(gameIndex) {
+        let games = JSON.parse(localStorage.getItem("bowlingGames")) || [];
+        games.splice(gameIndex, 1);
+        localStorage.setItem("bowlingGames", JSON.stringify(games));
+        window.location.reload();
+      }
     </script>
   </body>
 </html>
